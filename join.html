@@ -1,12 +1,43 @@
 <!DOCTYPE html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="robots" content="noindex"><title>ETCH — A moment is waiting for you</title><style>body{font-family:Georgia,serif;background:#0A1628;color:#EDE6D6;max-width:640px;margin:0 auto;padding:44px 22px;line-height:1.65}.brand{color:#C9A84C;letter-spacing:6px;font-size:14px;text-align:center}.rule{width:46px;height:1px;background:#C9A84C;opacity:.6;margin:20px auto}.foot{margin-top:44px;color:#A99E86;font-size:.85em;text-align:center}.big{font-size:1.3em;text-align:center;margin:22px 0 8px}.note{font-style:italic;color:#C9B98A;text-align:center}.ctr{text-align:center}.moment{border:2px solid #C9A84C;border-radius:6px;overflow:hidden;margin:26px auto;box-shadow:0 8px 30px rgba(0,0,0,.45)}.moment img,.moment video{display:block;width:100%;height:auto}.words{padding:26px;font-style:italic;font-size:1.15em;background:#101E33}.auth{font-family:Courier,monospace;font-size:.72em;letter-spacing:.14em;color:#A99E86;text-align:center;margin-top:10px}.cta{display:inline-block;background:#C9A84C;color:#0A1628;font-weight:bold;padding:13px 34px;border-radius:999px;text-decoration:none;margin-top:14px}.audio{padding:22px;background:#101E33;text-align:center}</style></head><body>
+<meta name="robots" content="noindex"><title>ETCH — A moment is waiting for you</title><style>
+body{font-family:Georgia,serif;background:#0A1628;color:#EDE6D6;max-width:640px;margin:0 auto;padding:44px 22px;line-height:1.65}
+.brand{color:#C9A84C;letter-spacing:6px;font-size:14px;text-align:center}
+.rule{width:46px;height:1px;background:#C9A84C;opacity:.6;margin:20px auto}
+.foot{margin-top:44px;color:#A99E86;font-size:.85em;text-align:center}
+.big{font-size:1.3em;text-align:center;margin:22px 0 8px}
+.note{font-style:italic;color:#C9B98A;text-align:center}
+.ctr{text-align:center}
+.cta{display:inline-block;background:#C9A84C;color:#0A1628;font-weight:bold;padding:13px 34px;border-radius:999px;text-decoration:none;margin-top:14px}
+.audio{padding:22px;background:#101E33;text-align:center}
+.words{padding:26px;font-style:italic;font-size:1.15em;background:#101E33}
+/* ── The card: front = the moment, back = the seal. Tap to flip. ── */
+.flip{margin:26px auto;perspective:1200px;cursor:pointer;-webkit-tap-highlight-color:transparent}
+.flip-inner{display:grid;transition:transform .7s cubic-bezier(.4,.1,.2,1);transform-style:preserve-3d}
+.face{grid-area:1/1;backface-visibility:hidden;-webkit-backface-visibility:hidden;
+  border:2px solid #C9A84C;border-radius:6px;overflow:hidden;box-shadow:0 8px 30px rgba(0,0,0,.45)}
+.face img,.face video{display:block;width:100%;height:auto}
+.back{transform:rotateY(180deg);background:#0D1B2A;display:flex;flex-direction:column;justify-content:center;align-items:center;
+  text-align:center;padding:28px 22px;position:relative}
+.flip.flipped .flip-inner{transform:rotateY(180deg)}
+/* corner marks — the etch frame */
+.back:before,.back:after{content:"";position:absolute;width:16px;height:16px;border-color:#C9A84C;border-style:solid}
+.back:before{top:10px;left:10px;border-width:1px 0 0 1px}
+.back:after{bottom:10px;right:10px;border-width:0 1px 1px 0}
+.seal-brand{color:#C9A84C;letter-spacing:5px;font-size:12px}
+.seal-label{font-family:Courier,monospace;font-size:.68em;letter-spacing:.2em;color:#A99E86;margin-top:18px}
+.seal-date{font-size:1.25em;color:#EDE6D6;margin:6px 0 2px}
+.seal-time{font-family:Courier,monospace;font-size:.75em;letter-spacing:.14em;color:#C9A84C}
+.seal-from{font-style:italic;color:#C9B98A;margin-top:16px;font-size:.95em}
+.seal-cta{display:inline-block;background:#C9A84C;color:#0A1628;font-weight:bold;padding:10px 26px;border-radius:999px;text-decoration:none;margin-top:20px;font-size:.9em}
+.hint{font-family:Courier,monospace;font-size:.68em;letter-spacing:.18em;color:#A99E86;text-align:center;margin-top:10px}
+</style></head><body>
 <div class="brand">E T C H</div><div class="rule"></div>
 <div id="content"><p class="big">A moment is waiting for you.</p><p class="ctr">Opening&hellip;</p></div>
 <script>
 (async () => {
   const el = document.getElementById('content');
-  const bad = () => { el.innerHTML = '<p class="big">This invite link isn\u2019t valid.</p><p class="ctr">Ask the sender to share it again from ETCH.</p>'; };
+  const bad = () => { el.innerHTML = '<p class="big">This invite link isn’t valid.</p><p class="ctr">Ask the sender to share it again from ETCH.</p>'; };
   const code = new URLSearchParams(location.search).get('m');
   if (!code) return bad();
   try {
@@ -15,29 +46,56 @@
     if (!d.valid) return bad();
     const esc = s => s ? s.replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])) : '';
     const who = esc(d.senderName || 'Someone');
-    let sealed = '';
-    if (d.sealedAt) { try { sealed = new Date(d.sealedAt).toLocaleDateString(undefined,{year:'numeric',month:'long',day:'numeric'}); } catch(e){} }
+    let sealedDate = '', sealedTime = '';
+    if (d.sealedAt) { try {
+      const t = new Date(d.sealedAt);
+      sealedDate = t.toLocaleDateString(undefined,{year:'numeric',month:'long',day:'numeric'});
+      sealedTime = t.toLocaleTimeString(undefined,{hour:'numeric',minute:'2-digit'});
+    } catch(e){} }
 
-    // The moment itself — the gift delivers on open.
-    let momentHtml = '';
+    // FRONT — the moment itself, the gift.
+    let front = '';
     if (d.contentType === 'photo' && d.mediaUrl) {
-      momentHtml = '<div class="moment"><img src="' + d.mediaUrl + '" alt="The moment"></div>';
+      front = '<img src="' + d.mediaUrl + '" alt="The moment">';
     } else if (d.contentType === 'video' && d.mediaUrl) {
-      momentHtml = '<div class="moment"><video controls playsinline ' + (d.posterUrl ? 'poster="' + d.posterUrl + '"' : '') + ' src="' + d.mediaUrl + '"></video></div>';
+      front = '<video controls playsinline ' + (d.posterUrl ? 'poster="' + d.posterUrl + '"' : '') + ' src="' + d.mediaUrl + '"></video>';
     } else if ((d.contentType === 'voice' || d.contentType === 'audio') && d.mediaUrl) {
-      momentHtml = '<div class="moment"><div class="audio"><p style="margin-top:0">Their voice, from that moment:</p><audio controls src="' + d.mediaUrl + '" style="width:100%"></audio></div></div>';
+      front = '<div class="audio"><p style="margin-top:0">Their voice, from that moment:</p><audio controls src="' + d.mediaUrl + '" style="width:100%"></audio></div>';
     } else if (d.text) {
-      momentHtml = '<div class="moment"><div class="words">&ldquo;' + esc(d.text) + '&rdquo;</div></div>';
+      front = '<div class="words">&ldquo;' + esc(d.text) + '&rdquo;</div>';
     }
+
+    // BACK — the seal: timestamp, the record it comes from, the ETCH mark.
+    const back =
+      '<div class="seal-brand">E T C H</div>'
+      + '<div class="seal-label">AUTHENTICATED &middot; ETCH LEDGER</div>'
+      + (sealedDate ? '<div class="seal-date">Sealed ' + sealedDate + '</div>' : '')
+      + (sealedTime ? '<div class="seal-time">' + sealedTime.toUpperCase() + '</div>' : '')
+      + '<div class="seal-from">from ' + who + '’s permanent life record</div>'
+      + '<a class="seal-cta" href="https://testflight.apple.com/join/1HcnXT4B">Get ETCH</a>';
+
+    const card = front
+      ? '<div class="flip" id="card"><div class="flip-inner">'
+        + '<div class="face front">' + front + '</div>'
+        + '<div class="face back">' + back + '</div>'
+        + '</div></div><div class="hint">TAP THE CARD TO FLIP IT</div>'
+      : '';
 
     el.innerHTML =
       '<p class="big">' + who + ' sent you a moment.</p>'
       + (d.note ? '<p class="note">&ldquo;' + esc(d.note) + '&rdquo;</p>' : '')
-      + momentHtml
-      + (sealed ? '<div class="auth">AUTHENTICATED &middot; ETCH LEDGER &middot; SEALED ' + sealed.toUpperCase() + '</div>' : '')
-      + '<p class="ctr" style="margin-top:30px">This is a real, sealed moment from ' + who + '\u2019s permanent life record.</p>'
+      + card
+      + '<p class="ctr" style="margin-top:30px">This is a real, sealed moment from ' + who + '’s permanent life record.</p>'
       + '<p class="ctr"><b>Keep it forever:</b> join ETCH with the email or phone this was sent to, and it lands on your own record.</p>'
       + '<p class="ctr"><a class="cta" href="https://testflight.apple.com/join/1HcnXT4B">Get ETCH (beta)</a></p>';
+
+    const c = document.getElementById('card');
+    if (c) c.addEventListener('click', e => {
+      // The media's own controls and the Get ETCH link stay usable —
+      // only a tap on the frame itself flips the card.
+      if (e.target.closest('video,audio,a')) return;
+      c.classList.toggle('flipped');
+    });
   } catch (e) { bad(); }
 })();
 </script>
