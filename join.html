@@ -28,6 +28,7 @@ body{font-family:Georgia,serif;background:#0A1628;color:#EDE6D6;max-width:640px;
 .seal-label{font-family:Courier,monospace;font-size:.68em;letter-spacing:.2em;color:#A99E86;margin-top:18px}
 .seal-date{font-size:1.25em;color:#EDE6D6;margin:6px 0 2px}
 .seal-time{font-family:Courier,monospace;font-size:.75em;letter-spacing:.14em;color:#C9A84C}
+.seal-place{font-family:Courier,monospace;font-size:.72em;letter-spacing:.12em;color:#A99E86;margin-top:4px}
 .seal-from{font-style:italic;color:#C9B98A;margin-top:16px;font-size:.95em}
 .seal-cta{display:inline-block;background:#C9A84C;color:#0A1628;font-weight:bold;padding:10px 26px;border-radius:999px;text-decoration:none;margin-top:20px;font-size:.9em}
 .hint{font-family:Courier,monospace;font-size:.68em;letter-spacing:.18em;color:#A99E86;text-align:center;margin-top:10px}
@@ -58,7 +59,7 @@ body{font-family:Georgia,serif;background:#0A1628;color:#EDE6D6;max-width:640px;
     if (d.contentType === 'photo' && d.mediaUrl) {
       front = '<img src="' + d.mediaUrl + '" alt="The moment">';
     } else if (d.contentType === 'video' && d.mediaUrl) {
-      front = '<video controls playsinline ' + (d.posterUrl ? 'poster="' + d.posterUrl + '"' : '') + ' src="' + d.mediaUrl + '"></video>';
+      front = '<video controls playsinline preload="metadata" ' + (d.posterUrl ? 'poster="' + d.posterUrl + '"' : '') + ' src="' + d.mediaUrl + '#t=0.001"></video>';
     } else if ((d.contentType === 'voice' || d.contentType === 'audio') && d.mediaUrl) {
       front = '<div class="audio"><p style="margin-top:0">Their voice, from that moment:</p><audio controls src="' + d.mediaUrl + '" style="width:100%"></audio></div>';
     } else if (d.text) {
@@ -71,6 +72,7 @@ body{font-family:Georgia,serif;background:#0A1628;color:#EDE6D6;max-width:640px;
       + '<div class="seal-label">AUTHENTICATED &middot; ETCH LEDGER</div>'
       + (sealedDate ? '<div class="seal-date">Sealed ' + sealedDate + '</div>' : '')
       + (sealedTime ? '<div class="seal-time">' + sealedTime.toUpperCase() + '</div>' : '')
+      + (d.place ? '<div class="seal-place">' + esc(d.place) + '</div>' : '')
       + '<div class="seal-from">from ' + who + '’s permanent life record</div>'
       + '<a class="seal-cta" href="https://testflight.apple.com/join/1HcnXT4B">Get ETCH</a>';
 
@@ -78,7 +80,7 @@ body{font-family:Georgia,serif;background:#0A1628;color:#EDE6D6;max-width:640px;
       ? '<div class="flip" id="card"><div class="flip-inner">'
         + '<div class="face front">' + front + '</div>'
         + '<div class="face back">' + back + '</div>'
-        + '</div></div><div class="hint">TAP THE CARD TO FLIP IT</div>'
+        + '</div></div><div class="hint" id="fliphint" style="cursor:pointer">TAP HERE TO FLIP THE CARD &middot; SEE THE SEAL</div>'
       : '';
 
     el.innerHTML =
@@ -90,6 +92,9 @@ body{font-family:Georgia,serif;background:#0A1628;color:#EDE6D6;max-width:640px;
       + '<p class="ctr"><a class="cta" href="https://testflight.apple.com/join/1HcnXT4B">Get ETCH (beta)</a></p>';
 
     const c = document.getElementById('card');
+    const flip = () => c && c.classList.toggle('flipped');
+    const h = document.getElementById('fliphint');
+    if (h) h.addEventListener('click', flip);
     if (c) c.addEventListener('click', e => {
       // The media's own controls and the Get ETCH link stay usable —
       // only a tap on the frame itself flips the card.
